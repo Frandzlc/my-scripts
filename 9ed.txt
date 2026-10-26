@@ -4,9 +4,22 @@ local runService = game:GetService("RunService")
 
 -- إنشاء الواجهة الرئيسية
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "R4W7_DhabFixTP"
+screenGui.Name = "R4W7_DhabWithLogo"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = player:WaitForChild("PlayerGui")
+
+-- زر الشعار (اللوقو) الدائم على الشاشة
+local logoBtn = Instance.new("TextButton")
+logoBtn.Size = UDim2.new(0, 50, 0, 50)
+logoBtn.Position = UDim2.new(0, 20, 0, 100)
+logoBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 40)
+logoBtn.Text = "🦎"
+logoBtn.TextSize = 22
+logoBtn.Parent = screenGui
+
+local logoCorner = Instance.new("UICorner")
+logoCorner.CornerRadius = UDim.new(0, 12)
+logoCorner.Parent = logoBtn
 
 -- إطار الواجهة الرئيسي (قابل للسحب)
 local mainFrame = Instance.new("Frame")
@@ -14,7 +27,7 @@ mainFrame.Size = UDim2.new(0, 320, 0, 450)
 mainFrame.Position = UDim2.new(0.5, -160, 0.5, -225)
 mainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
 mainFrame.BorderSizePixel = 0
-mainFrame.Visible = false
+mainFrame.Visible = false -- تبدأ مغلقة
 mainFrame.Parent = screenGui
 
 local uiCorner = Instance.new("UICorner")
@@ -25,7 +38,7 @@ uiCorner.Parent = mainFrame
 local titleLabel = Instance.new("TextLabel")
 titleLabel.Size = UDim2.new(1, 0, 0, 40)
 titleLabel.BackgroundColor3 = Color3.fromRGB(28, 28, 40)
-titleLabel.Text = "🦎 رادار وحل مشكلة الرجوع | r4w7"
+titleLabel.Text = "🦎 رادار ولقو صيد الضبان | r4w7"
 titleLabel.TextColor3 = Color3.fromRGB(0, 255, 204)
 titleLabel.TextSize = 14
 titleLabel.Font = Enum.Font.GothamBold
@@ -76,6 +89,19 @@ closeBtn.Parent = titleLabel
 
 closeBtn.MouseButton1Click:Connect(function()
 	mainFrame.Visible = false
+end)
+
+-- فتح وإغلاق القائمة عبر اللوقو أو زر ESC
+local function toggleMenu()
+	mainFrame.Visible = not mainFrame.Visible
+end
+
+logoBtn.MouseButton1Click:Connect(toggleMenu)
+
+userInputService.InputBegan:Connect(function(input, gameProcessed)
+	if input.KeyCode == Enum.KeyCode.Escape then
+		toggleMenu()
+	end
 end)
 
 -- حالات الميزات
@@ -132,15 +158,8 @@ footerLabel.BackgroundTransparency = 1
 footerLabel.TextColor3 = Color3.fromRGB(120, 120, 140)
 footerLabel.TextSize = 11
 footerLabel.Font = Enum.Font.Gotham
-footerLabel.Text = "زر (ESC) للإخفاء/الإظهار | اضغط على الضب للانتقال"
+footerLabel.Text = "اضغط اللوقو أو (ESC) للإخفاء | اضغط للانتظام"
 footerLabel.Parent = mainFrame
-
--- إظهار/إغلاق القائمة عبر ESC
-userInputService.InputBegan:Connect(function(input, gameProcessed)
-	if input.KeyCode == Enum.KeyCode.Escape then
-		mainFrame.Visible = not mainFrame.Visible
-	end
-end)
 
 -- جدول الـ ESP
 local espItems = {}
@@ -163,126 +182,4 @@ local function getRarity(name)
 		return "عادي ⚪", Color3.fromRGB(200, 200, 200)
 	elseif rarityType < 85 then
 		return "نادر 🔵", Color3.fromRGB(50, 150, 255)
-	elseif rarityType < 95 then
-		return "أسطوري 🟣", Color3.fromRGB(180, 50, 255)
-	else
-		return "خرافي 🔥", Color3.fromRGB(255, 165, 0)
-	end
-end
-
--- دالة الانتقال الآمن (تمنع نظام الحماية من إرجاعك للخلف)
-local function safeTeleport(targetPart)
-	local character = player.Character
-	if character and character:FindFirstChild("HumanoidRootPart") then
-		local hrp = character.HumanoidRootPart
-		-- إيقاف السرعة والحركة المؤقتة لمنع كشف الانتقال
-		if character:FindFirstChildOfClass("Humanoid") then
-			character:FindFirstChildOfClass("Humanoid").PlatformStand = true
-		end
-		
-		-- الانتقال الفوري مع تثبيت الـ Velocity لتجاوز الـ Anti-Cheat
-		hrp.CFrame = targetPart.CFrame + Vector3.new(0, 3, 0)
-		hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-		
-		task.wait(0.05)
-		if character:FindFirstChildOfClass("Humanoid") then
-			character:FindFirstChildOfClass("Humanoid").PlatformStand = false
-		end
-	end
-end
-
--- التحديث المستمر
-runService.RenderStepped:Connect(function()
-	local character = player.Character
-	if not character or not character:FindFirstChild("HumanoidRootPart") then
-		clearESP()
-		return
-	end
-	
-	clearESP()
-	
-	local activeCount = 0
-	if mainFrame.Visible then
-		for _, child in pairs(scrollingFrame:GetChildren()) do
-			if child:IsA("Frame") then child:Destroy() end
-		end
-	end
-	
-	for _, obj in pairs(workspace:GetDescendants()) do
-		if obj ~= character and not obj:IsDescendantOf(character) then
-			local humanoid = obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid")
-			local isLive = obj:IsA("Model") and (humanoid or obj.Name:find("ضب") or obj.Name:find("Dhab") or obj.Name:find("Lizard"))
-			
-			if isLive then
-				local part = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
-				if part then
-					local dist = math.floor((character.HumanoidRootPart.Position - part.Position).Magnitude)
-					
-					if dist < 3000 then
-						activeCount = activeCount + 1
-						local rarityText, rarityColor = getRarity(obj.Name)
-						
-						-- رسم الـ ESP
-						if espActive then
-							local vector, onScreen = workspace.CurrentCamera:WorldToViewportPoint(part.Position)
-							if onScreen then
-								local espText = Drawing.new("Text")
-								espText.Text = "🦎 " .. obj.Name .. " | " .. rarityText .. " [" .. dist .. "م]"
-								espText.Size = 13
-								espText.Center = true
-								espText.Outline = true
-								espText.Color = rarityColor
-								espText.Position = Vector2.new(vector.X, vector.Y - 20)
-								espText.Visible = true
-								table.insert(espItems, espText)
-							end
-						end
-						
-						-- إضافة الضب للقائمة مع الانتقال الآمن عند الضغط عليه
-						if mainFrame.Visible then
-							local itemBtn = Instance.new("TextButton")
-							itemBtn.Size = UDim2.new(1, -5, 0, 45)
-							itemBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 40)
-							itemBtn.Text = ""
-							itemBtn.Parent = scrollingFrame
-							
-							local itemCorner = Instance.new("UICorner")
-							itemCorner.CornerRadius = UDim.new(0, 8)
-							itemCorner.Parent = itemBtn
-							
-							local nameLabel = Instance.new("TextLabel")
-							nameLabel.Size = UDim2.new(0.65, 0, 1, 0)
-							nameLabel.Position = UDim2.new(0, 10, 0, 0)
-							nameLabel.BackgroundTransparency = 1
-							nameLabel.TextXAlignment = Enum.TextXAlignment.Left
-							nameLabel.TextColor3 = rarityColor
-							nameLabel.TextSize = 12
-							nameLabel.Font = Enum.Font.GothamBold
-							nameLabel.Text = obj.Name .. " (" .. rarityText .. ")"
-							nameLabel.Parent = itemBtn
-							
-							local distLabel = Instance.new("TextLabel")
-							distLabel.Size = UDim2.new(0.35, -10, 1, 0)
-							distLabel.Position = UDim2.new(0.65, 0, 0, 0)
-							distLabel.BackgroundTransparency = 1
-							distLabel.TextXAlignment = Enum.TextXAlignment.Right
-							distLabel.TextColor3 = Color3.fromRGB(0, 255, 200)
-							distLabel.TextSize = 12
-							distLabel.Font = Enum.Font.GothamMedium
-							distLabel.Text = "انتقال ⚡ (" .. dist .. "م)"
-							distLabel.Parent = itemBtn
-							
-							itemBtn.MouseButton1Click:Connect(function()
-								safeTeleport(part)
-							end)
-						end
-					end
-				end
-			end
-		end
-	end
-	
-	if mainFrame.Visible then
-		scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, activeCount * 51)
-	end
-end)
+	elseif rarity
