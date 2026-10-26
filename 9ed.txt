@@ -1,0 +1,89 @@
+-- إنشاء الواجهة الأساسية داخل PlayerGui
+local player = game.Players.LocalPlayer
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "R4W7_ServerInfo"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+-- إطار الواجهة الرئيسي (تصميم داكن وعصري)
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 220, 0, 140)
+mainFrame.Position = UDim2.new(0, 20, 0, 20) -- الزاوية العلوية اليسرى (يمكنك تغييرها)
+mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+mainFrame.BorderSizePixel = 0
+mainFrame.Parent = screenGui
+
+-- حواف دائرية للإطار
+local uiCorner = Instance.new("UICorner")
+uiCorner.CornerRadius = UDim.new(0, 10)
+uiCorner.Parent = mainFrame
+
+-- شريط العنوان (يحمل اسم r4w7)
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, 0, 0, 35)
+titleLabel.BackgroundColor3 = Color3.fromRGB(35, 35, 48)
+titleLabel.Text = "r4w7 Panel"
+titleLabel.TextColor3 = Color3.fromRGB(0, 255, 204) -- لون فوسفوري جذاب
+titleLabel.TextSize = 16
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.Parent = mainFrame
+
+local titleCorner = Instance.new("UICorner")
+titleCorner.CornerRadius = UDim.new(0, 10)
+titleCorner.Parent = titleLabel
+
+-- كتابة معلومات البنق (Ping)
+local pingLabel = Instance.new("TextLabel")
+pingLabel.Size = UDim2.new(1, -20, 0, 30)
+pingLabel.Position = UDim2.new(0, 10, 0, 45)
+pingLabel.BackgroundTransparency = 1
+pingLabel.TextXAlignment = Enum.TextXAlignment.Left
+pingLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+pingLabel.TextSize = 14
+pingLabel.Font = Enum.Font.GothamMedium
+pingLabel.Text = "البنق: جاري الحساب..."
+pingLabel.Parent = mainFrame
+
+-- كتابة عدد اللاعبين
+local playersLabel = Instance.new("TextLabel")
+playersLabel.Size = UDim2.new(1, -20, 0, 30)
+playersLabel.Position = UDim2.new(0, 10, 0, 80)
+playersLabel.BackgroundTransparency = 1
+playersLabel.TextXAlignment = Enum.TextXAlignment.Left
+playersLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+playersLabel.TextSize = 14
+playersLabel.Font = Enum.Font.GothamMedium
+playersLabel.Text = "اللاعبين: ..."
+playersLabel.Parent = mainFrame
+
+-- زر تصغير/إغلاق خفيف أو توقيع إضافي باسمك في الأسفل
+local footerLabel = Instance.new("TextLabel")
+footerLabel.Size = UDim2.new(1, 0, 0, 20)
+footerLabel.Position = UDim2.new(0, 0, 1, -20)
+footerLabel.BackgroundTransparency = 1
+footerLabel.TextColor3 = Color3.fromRGB(100, 100, 120)
+footerLabel.TextSize = 11
+footerLabel.Font = Enum.Font.Gotham
+footerLabel.Text = "By r4w7"
+footerLabel.Parent = mainFrame
+
+-- حلقة تحديث البيانات تلقائياً كل ثانية
+task.spawn(function()
+	while task.wait(1) do
+		-- حساب البنق بدقة من خصائص اللاعب
+		local success, ping = pcall(function()
+			return math.floor(player:GetNetworkPing() * 1000)
+		end)
+		
+		if success and ping then
+			pingLabel.Text = "📡 البنق: " .. ping .. " ms"
+		else
+			pingLabel.Text = "📡 البنق: غير متوفر"
+		end
+		
+		-- حساب عدد اللاعبين الحاليين في السيرفر ضد الحد الأقصى
+		local currentPlayers = #game.Players:GetPlayers()
+		local maxPlayers = game.Players.MaxPlayers
+		playersLabel.Text = "👥 اللاعبين: " .. currentPlayers .. " / " .. maxPlayers
+	end
+end)
