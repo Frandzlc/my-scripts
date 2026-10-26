@@ -3,14 +3,14 @@ local tweenService = game:GetService("TweenService")
 
 -- إنشاء الواجهة الرئيسية
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "R4W7_LizardTeleport"
+screenGui.Name = "R4W7_DhabTeleport"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
 -- إطار الواجهة الرئيسي
 local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 250, 0, 200)
-mainFrame.Position = UDim2.new(0, 20, 0, -220) -- ينزلق من الأعلى
+mainFrame.Position = UDim2.new(0, 20, 0, -220)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
 mainFrame.BorderSizePixel = 0
 mainFrame.Parent = screenGui
@@ -33,7 +33,7 @@ local titleCorner = Instance.new("UICorner")
 titleCorner.CornerRadius = UDim.new(0, 10)
 titleCorner.Parent = titleLabel
 
--- نص حالة البحث عن الضبان
+-- نص الحالة
 local statusLabel = Instance.new("TextLabel")
 statusLabel.Size = UDim2.new(1, -20, 0, 30)
 statusLabel.Position = UDim2.new(0, 10, 0, 45)
@@ -42,10 +42,10 @@ statusLabel.TextXAlignment = Enum.TextXAlignment.Left
 statusLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
 statusLabel.TextSize = 13
 statusLabel.Font = Enum.Font.GothamMedium
-statusLabel.Text = "🔍 جارِ البحث عن أقرب ضب..."
+statusLabel.Text = "🔍 جاري البحث عن الضبان..."
 statusLabel.Parent = mainFrame
 
--- زر الانتقال (Teleport Button)
+-- زر الانتقال
 local tpButton = Instance.new("TextButton")
 tpButton.Size = UDim2.new(1, -20, 0, 40)
 tpButton.Position = UDim2.new(0, 10, 0, 85)
@@ -60,7 +60,7 @@ local btnCorner = Instance.new("UICorner")
 btnCorner.CornerRadius = UDim.new(0, 8)
 btnCorner.Parent = tpButton
 
--- حقوق r4w7 في الأسفل
+-- الحقوق
 local footerLabel = Instance.new("TextLabel")
 footerLabel.Size = UDim2.new(1, 0, 0, 20)
 footerLabel.Position = UDim2.new(0, 0, 1, -20)
@@ -71,31 +71,40 @@ footerLabel.Font = Enum.Font.Gotham
 footerLabel.Text = "By r4w7"
 footerLabel.Parent = mainFrame
 
---- **تأثير ظهور الواجهة (Transition)** ---
-local showTween = tweenService:Create(
+-- تأثير ظهور الواجهة
+tweenService:Create(
 	mainFrame, 
 	TweenInfo.new(0.5, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), 
 	{Position = UDim2.new(0, 20, 0, 20)}
-)
-showTween:Play()
+):Play()
 
---- **وظيفة البحث عن أهداف الضبان داخل اللعبة** ---
-local function getClosestLizard()
+-- دالة متقدمة للبحث عن الضبان أو الكائنات داخل الماب
+local function getClosestDhab()
 	local character = player.Character
 	if not character or not character:FindFirstChild("HumanoidRootPart") then return nil end
 	
 	local closestTarget = nil
 	local shortestDistance = math.huge
 	
-	-- يتم البحث داخل مجلد Workspace عن الكائنات ذات الاسم (Dhab / Lizard / ضب)
+	-- نبحث في كل المجلدات عن أي نموذج أو جزء يحتوي على كاراكتر أو كائن متحرك أو اسم مشابه
 	for _, obj in pairs(workspace:GetDescendants()) do
-		if obj:IsA("Model") or obj:IsA("BasePart") then
+		if obj ~= character and not obj:IsDescendantOf(player.Character) then
+			-- نتحقق إذا كان الكائن يحتوي على Humanoid (يعني كائن حي/موب) أو اسمه يهمنا
+			local isLive = obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid")
 			local name = string.lower(obj.Name)
-			if name:find("ضب") or name:find("dhab") or name:find("lizard") then
-				local part = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
+			
+			if isLive or name:find("ضب") or name:find("dhab") or name:find("lizard") or name:find("animal") or name:find("mob") then
+				local part = nil
+				if obj:IsA("Model") then
+					part = obj.PrimaryPart or obj:FindFirstChild("HumanoidRootPart") or obj:FindFirstChildWhichIsA("BasePart")
+				elseif obj:IsA("BasePart") then
+					part = obj
+				end
+				
 				if part then
 					local distance = (character.HumanoidRootPart.Position - part.Position).Magnitude
-					if distance < shortestDistance then
+					-- نتأكد أنه ليس اللاعب نفسه وأن المسافة معقولة
+					if distance < shortestDistance and distance > 5 then
 						shortestDistance = distance
 						closestTarget = part
 					end
@@ -107,27 +116,27 @@ local function getClosestLizard()
 	return closestTarget, math.floor(shortestDistance)
 end
 
--- حلقة لتحديث مكان أقرب ضب والمسافة تلقائياً
+-- تحديث المسافة باستمرار
 task.spawn(function()
 	while task.wait(1) do
-		local target, distance = getClosestLizard()
+		local target, distance = getClosestDhab()
 		if target then
-			statusLabel.Text = "📍 أقرب ضب على بعد: " .. distance .. " متر"
+			statusLabel.Text = "📍 أقرب ضب على بعد: " .." متر" .. distance
 		else
-			statusLabel.Text = "❌ لا يوجد ضبان قريبة حالياً"
+			statusLabel.Text = "❌ لم يتم رصد ضبان قريبة"
 		end
 	end
 end)
 
--- عمل زر الانتقال السريع
+-- تنفيذ الانتقال عند الضغط على الزر
 tpButton.MouseButton1Click:Connect(function()
-	local target, _ = getClosestLizard()
+	local target, _ = getClosestDhab()
 	local character = player.Character
 	
 	if target and character and character:FindFirstChild("HumanoidRootPart") then
-		-- نقل اللاعب فوق الضب بمسافة بسيطة لعدم الالتصاق
 		character.HumanoidRootPart.CFrame = target.CFrame + Vector3.new(0, 3, 0)
+		statusLabel.Text = "⚡ تم الانتقال بنجاح!"
 	else
-		statusLabel.Text = "⚠️ لم يتم العثور على هدف للانتقال!"
+		statusLabel.Text = "⚠️ تعذر العثور على هدف للانتقال!"
 	end
 end)
