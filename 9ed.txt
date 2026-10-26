@@ -1,30 +1,31 @@
--- إنشاء الواجهة الأساسية داخل PlayerGui
 local player = game.Players.LocalPlayer
+local tweenService = game:GetService("TweenService")
+
+-- إنشاء الواجهة الرئيسية
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "R4W7_ServerInfo"
+screenGui.Name = "R4W7_LizardTeleport"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
--- إطار الواجهة الرئيسي (تصميم داكن وعصري)
+-- إطار الواجهة الرئيسي
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 220, 0, 140)
-mainFrame.Position = UDim2.new(0, 20, 0, 20) -- الزاوية العلوية اليسرى (يمكنك تغييرها)
+mainFrame.Size = UDim2.new(0, 250, 0, 200)
+mainFrame.Position = UDim2.new(0, 20, 0, -220) -- ينزلق من الأعلى
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
 mainFrame.BorderSizePixel = 0
 mainFrame.Parent = screenGui
 
--- حواف دائرية للإطار
 local uiCorner = Instance.new("UICorner")
 uiCorner.CornerRadius = UDim.new(0, 10)
 uiCorner.Parent = mainFrame
 
--- شريط العنوان (يحمل اسم r4w7)
+-- شريط العنوان
 local titleLabel = Instance.new("TextLabel")
 titleLabel.Size = UDim2.new(1, 0, 0, 35)
 titleLabel.BackgroundColor3 = Color3.fromRGB(35, 35, 48)
-titleLabel.Text = "r4w7 Panel"
-titleLabel.TextColor3 = Color3.fromRGB(0, 255, 204) -- لون فوسفوري جذاب
-titleLabel.TextSize = 16
+titleLabel.Text = "r4w7 | صيد الضبان 🦎"
+titleLabel.TextColor3 = Color3.fromRGB(0, 255, 204)
+titleLabel.TextSize = 15
 titleLabel.Font = Enum.Font.GothamBold
 titleLabel.Parent = mainFrame
 
@@ -32,31 +33,34 @@ local titleCorner = Instance.new("UICorner")
 titleCorner.CornerRadius = UDim.new(0, 10)
 titleCorner.Parent = titleLabel
 
--- كتابة معلومات البنق (Ping)
-local pingLabel = Instance.new("TextLabel")
-pingLabel.Size = UDim2.new(1, -20, 0, 30)
-pingLabel.Position = UDim2.new(0, 10, 0, 45)
-pingLabel.BackgroundTransparency = 1
-pingLabel.TextXAlignment = Enum.TextXAlignment.Left
-pingLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
-pingLabel.TextSize = 14
-pingLabel.Font = Enum.Font.GothamMedium
-pingLabel.Text = "البنق: جاري الحساب..."
-pingLabel.Parent = mainFrame
+-- نص حالة البحث عن الضبان
+local statusLabel = Instance.new("TextLabel")
+statusLabel.Size = UDim2.new(1, -20, 0, 30)
+statusLabel.Position = UDim2.new(0, 10, 0, 45)
+statusLabel.BackgroundTransparency = 1
+statusLabel.TextXAlignment = Enum.TextXAlignment.Left
+statusLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+statusLabel.TextSize = 13
+statusLabel.Font = Enum.Font.GothamMedium
+statusLabel.Text = "🔍 جارِ البحث عن أقرب ضب..."
+statusLabel.Parent = mainFrame
 
--- كتابة عدد اللاعبين
-local playersLabel = Instance.new("TextLabel")
-playersLabel.Size = UDim2.new(1, -20, 0, 30)
-playersLabel.Position = UDim2.new(0, 10, 0, 80)
-playersLabel.BackgroundTransparency = 1
-playersLabel.TextXAlignment = Enum.TextXAlignment.Left
-playersLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
-playersLabel.TextSize = 14
-playersLabel.Font = Enum.Font.GothamMedium
-playersLabel.Text = "اللاعبين: ..."
-playersLabel.Parent = mainFrame
+-- زر الانتقال (Teleport Button)
+local tpButton = Instance.new("TextButton")
+tpButton.Size = UDim2.new(1, -20, 0, 40)
+tpButton.Position = UDim2.new(0, 10, 0, 85)
+tpButton.BackgroundColor3 = Color3.fromRGB(0, 180, 130)
+tpButton.Text = "⚡ انتقال إلى أقرب ضب"
+tpButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+tpButton.TextSize = 14
+tpButton.Font = Enum.Font.GothamBold
+tpButton.Parent = mainFrame
 
--- زر تصغير/إغلاق خفيف أو توقيع إضافي باسمك في الأسفل
+local btnCorner = Instance.new("UICorner")
+btnCorner.CornerRadius = UDim.new(0, 8)
+btnCorner.Parent = tpButton
+
+-- حقوق r4w7 في الأسفل
 local footerLabel = Instance.new("TextLabel")
 footerLabel.Size = UDim2.new(1, 0, 0, 20)
 footerLabel.Position = UDim2.new(0, 0, 1, -20)
@@ -67,23 +71,63 @@ footerLabel.Font = Enum.Font.Gotham
 footerLabel.Text = "By r4w7"
 footerLabel.Parent = mainFrame
 
--- حلقة تحديث البيانات تلقائياً كل ثانية
+--- **تأثير ظهور الواجهة (Transition)** ---
+local showTween = tweenService:Create(
+	mainFrame, 
+	TweenInfo.new(0.5, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), 
+	{Position = UDim2.new(0, 20, 0, 20)}
+)
+showTween:Play()
+
+--- **وظيفة البحث عن أهداف الضبان داخل اللعبة** ---
+local function getClosestLizard()
+	local character = player.Character
+	if not character or not character:FindFirstChild("HumanoidRootPart") then return nil end
+	
+	local closestTarget = nil
+	local shortestDistance = math.huge
+	
+	-- يتم البحث داخل مجلد Workspace عن الكائنات ذات الاسم (Dhab / Lizard / ضب)
+	for _, obj in pairs(workspace:GetDescendants()) do
+		if obj:IsA("Model") or obj:IsA("BasePart") then
+			local name = string.lower(obj.Name)
+			if name:find("ضب") or name:find("dhab") or name:find("lizard") then
+				local part = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
+				if part then
+					local distance = (character.HumanoidRootPart.Position - part.Position).Magnitude
+					if distance < shortestDistance then
+						shortestDistance = distance
+						closestTarget = part
+					end
+				end
+			end
+		end
+	end
+	
+	return closestTarget, math.floor(shortestDistance)
+end
+
+-- حلقة لتحديث مكان أقرب ضب والمسافة تلقائياً
 task.spawn(function()
 	while task.wait(1) do
-		-- حساب البنق بدقة من خصائص اللاعب
-		local success, ping = pcall(function()
-			return math.floor(player:GetNetworkPing() * 1000)
-		end)
-		
-		if success and ping then
-			pingLabel.Text = "📡 البنق: " .. ping .. " ms"
+		local target, distance = getClosestLizard()
+		if target then
+			statusLabel.Text = "📍 أقرب ضب على بعد: " .. distance .. " متر"
 		else
-			pingLabel.Text = "📡 البنق: غير متوفر"
+			statusLabel.Text = "❌ لا يوجد ضبان قريبة حالياً"
 		end
-		
-		-- حساب عدد اللاعبين الحاليين في السيرفر ضد الحد الأقصى
-		local currentPlayers = #game.Players:GetPlayers()
-		local maxPlayers = game.Players.MaxPlayers
-		playersLabel.Text = "👥 اللاعبين: " .. currentPlayers .. " / " .. maxPlayers
+	end
+end)
+
+-- عمل زر الانتقال السريع
+tpButton.MouseButton1Click:Connect(function()
+	local target, _ = getClosestLizard()
+	local character = player.Character
+	
+	if target and character and character:FindFirstChild("HumanoidRootPart") then
+		-- نقل اللاعب فوق الضب بمسافة بسيطة لعدم الالتصاق
+		character.HumanoidRootPart.CFrame = target.CFrame + Vector3.new(0, 3, 0)
+	else
+		statusLabel.Text = "⚠️ لم يتم العثور على هدف للانتقال!"
 	end
 end)
