@@ -1,14 +1,14 @@
 local player = game.Players.LocalPlayer
 local userInputService = game:GetService("UserInputService")
-local tweenService = game:GetService("TweenService")
+local runService = game:GetService("RunService")
 
--- إنشاء الواجهة الرئيسية
+-- إنشاء الواجهة الرئيسية للرادار
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "R4W7_DhabRadar"
+screenGui.Name = "R4W7_DhabESP_Radar"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
--- إطار الواجهة الرئيسي (مخفي بالبداية)
+-- إطار الواجهة الرئيسي (الرادار)
 local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 300, 0, 380)
 mainFrame.Position = UDim2.new(0.5, -150, 0.5, -190)
@@ -25,7 +25,7 @@ uiCorner.Parent = mainFrame
 local titleLabel = Instance.new("TextLabel")
 titleLabel.Size = UDim2.new(1, 0, 0, 40)
 titleLabel.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
-titleLabel.Text = "🦎 رادار صيد الضبان | r4w7"
+titleLabel.Text = "🦎 رادار و ESP الضبان | r4w7"
 titleLabel.TextColor3 = Color3.fromRGB(0, 255, 204)
 titleLabel.TextSize = 15
 titleLabel.Font = Enum.Font.GothamBold
@@ -50,7 +50,7 @@ closeBtn.MouseButton1Click:Connect(function()
 	mainFrame.Visible = false
 end)
 
--- صندوق القائمة (ScrollingFrame) لعرض الضبان القريبة
+-- صندوق القائمة (ScrollingFrame)
 local scrollingFrame = Instance.new("ScrollingFrame")
 scrollingFrame.Size = UDim2.new(1, -20, 1, -90)
 scrollingFrame.Position = UDim2.new(0, 10, 0, 50)
@@ -65,7 +65,7 @@ uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 uiListLayout.Padding = UDim.new(0, 6)
 uiListLayout.Parent = scrollingFrame
 
--- تذييل الواجهة (الحقوق)
+-- التذييل
 local footerLabel = Instance.new("TextLabel")
 footerLabel.Size = UDim2.new(1, 0, 0, 25)
 footerLabel.Position = UDim2.new(0, 0, 1, -25)
@@ -76,83 +76,48 @@ footerLabel.Font = Enum.Font.Gotham
 footerLabel.Text = "اضغط زر (ESC) لإخفاء/إظهار القائمة | By r4w7"
 footerLabel.Parent = mainFrame
 
--- دالة لفتح وإغلاق القائمة عبر زر ESC
+-- فتح وإغلاق القائمة بزر ESC
 userInputService.InputBegan:Connect(function(input, gameProcessed)
 	if input.KeyCode == Enum.KeyCode.Escape then
-		-- منع اللعبة من إيقاف القائمة الافتراضية بشكل كامل أو السماح بفتحها
 		mainFrame.Visible = not mainFrame.Visible
 	end
 end)
 
--- حلقة لتحديث رادار الضبان والمسافات والأنواع باستمرار
-task.spawn(function()
-	while task.wait(0.5) do
-		if mainFrame.Visible then
-			local character = player.Character
-			if character and character:FindFirstChild("HumanoidRootPart") then
-				-- مسح القائمة القديمة
-				for _, child in pairs(scrollingFrame:GetChildren()) do
-					if child:IsA("Frame") then
-						child:Destroy()
-					end
-				end
-				
-				local count = 0
-				-- البحث عن جميع الكائنات المحتملة في الـ Workspace
-				for _, obj in pairs(workspace:GetDescendants()) do
-					if obj ~= character and not obj:IsDescendantOf(character) then
-						local isLive = obj:IsA("Model") and (obj:FindFirstChildOfClass("Humanoid") or obj.Name:find("ضب") or obj.Name:find("Dhab") or obj.Name:find("Lizard"))
-						
-						if isLive then
-							local part = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
-							if part then
-								local dist = math.floor((character.HumanoidRootPart.Position - part.Position).Magnitude)
-								
-								if dist < 1500 then -- نطاق البحث 1500 متر
-									count = count + 1
-									
-									-- تصميم خانة لكل ضب يتم رصده
-									local itemFrame = Instance.new("Frame")
-									itemFrame.Size = UDim2.new(1, -5, 0, 45)
-									itemFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
-									itemFrame.Parent = scrollingFrame
-									
-									local itemCorner = Instance.new("UICorner")
-									itemCorner.CornerRadius = UDim.new(0, 8)
-									itemCorner.Parent = itemFrame
-									
-									-- اسم ونوع الضب
-									local nameLabel = Instance.new("TextLabel")
-									nameLabel.Size = UDim2.new(0.6, 0, 1, 0)
-									nameLabel.Position = UDim2.new(0, 10, 0, 0)
-									nameLabel.BackgroundTransparency = 1
-									nameLabel.TextXAlignment = Enum.TextXAlignment.Left
-									nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-									nameLabel.TextSize = 13
-									nameLabel.Font = Enum.Font.GothamBold
-									nameLabel.Text = "🦎 " .. obj.Name
-									nameLabel.Parent = itemFrame
-									
-									-- المسافة عنه
-									local distLabel = Instance.new("TextLabel")
-									distLabel.Size = UDim2.new(0.4, -10, 1, 0)
-									distLabel.Position = UDim2.new(0.6, 0, 0, 0)
-									distLabel.BackgroundTransparency = 1
-									distLabel.TextXAlignment = Enum.TextXAlignment.Right
-									distLabel.TextColor3 = Color3.fromRGB(0, 255, 200)
-									distLabel.TextSize = 13
-									distLabel.Font = Enum.Font.GothamMedium
-									distLabel.Text = dist .. " متر"
-									distLabel.Parent = itemFrame
-								end
-							end
-						end
-					end
-				end
-				
-				-- تحديث حجم القائمة بناءً على عدد النتائج
-				scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, count * 51)
+-- جدول لتخزين عناصر الـ ESP لكل ضب
+local espItems = {}
+
+-- دالة لإزالة الـ ESP القديم
+local function clearESP()
+	for _, esp in pairs(espItems) do
+		if esp then
+			esp:Remove()
+		end
+	end
+	espItems = {}
+end
+
+-- نظام التحديث للـ ESP والرادار في الوقت الفعلي
+runService.RenderStepped:Connect(function()
+	local character = player.Character
+	if not character or not character:FindFirstChild("HumanoidRootPart") then
+		clearESP()
+		return
+	end
+	
+	-- تنظيف الـ ESP في كل إطار لتحديث الأماكن
+	clearESP()
+	
+	local activeCount = 0
+	if mainFrame.Visible then
+		-- مسح محتوى القائمة القديمة لتحديثها
+		for _, child in pairs(scrollingFrame:GetChildren()) do
+			if child:IsA("Frame") then
+				child:Destroy()
 			end
 		end
 	end
-end)
+	
+	-- مسح الـ Workspace والبحث عن الضبان
+	for _, obj in pairs(workspace:GetDescendants()) do
+		if obj ~= character and not obj:IsDescendantOf(character) then
+			local isLive = obj:IsA("Model") and (obj:FindFirstChildOfClass("Humanoid") or obj.Name:find("ضب") or obj.Name:find("Dhab")
