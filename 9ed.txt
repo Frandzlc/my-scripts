@@ -1,88 +1,158 @@
 local player = game.Players.LocalPlayer
+local userInputService = game:GetService("UserInputService")
 local tweenService = game:GetService("TweenService")
 
+-- إنشاء الواجهة الرئيسية
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "R4W7_FixTP"
+screenGui.Name = "R4W7_DhabRadar"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
+-- إطار الواجهة الرئيسي (مخفي بالبداية)
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 240, 0, 160)
-mainFrame.Position = UDim2.new(0, 20, 0, 20)
+mainFrame.Size = UDim2.new(0, 300, 0, 380)
+mainFrame.Position = UDim2.new(0.5, -150, 0.5, -190)
 mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+mainFrame.BorderSizePixel = 0
+mainFrame.Visible = false -- تبدأ مغلقة
 mainFrame.Parent = screenGui
 
 local uiCorner = Instance.new("UICorner")
-uiCorner.CornerRadius = UDim.new(0, 10)
+uiCorner.CornerRadius = UDim.new(0, 12)
 uiCorner.Parent = mainFrame
 
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 35)
-title.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
-title.Text = "r4w7 | صيد الضبان ⚡"
-title.TextColor3 = Color3.fromRGB(0, 255, 200)
-title.TextSize = 14
-title.Font = Enum.Font.GothamBold
-title.Parent = mainFrame
+-- شريط العنوان
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, 0, 0, 40)
+titleLabel.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+titleLabel.Text = "🦎 رادار صيد الضبان | r4w7"
+titleLabel.TextColor3 = Color3.fromRGB(0, 255, 204)
+titleLabel.TextSize = 15
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.Parent = mainFrame
 
-local status = Instance.new("TextLabel")
-status.Size = UDim2.new(1, -20, 0, 30)
-status.Position = UDim2.new(0, 10, 0, 45)
-status.BackgroundTransparency = 1
-status.TextColor3 = Color3.fromRGB(255, 255, 255)
-status.TextSize = 12
-status.Font = Enum.Font.GothamMedium
-status.Text = "جاهز للانتقال..."
-status.Parent = mainFrame
+local titleCorner = Instance.new("UICorner")
+titleCorner.CornerRadius = UDim.new(0, 12)
+titleCorner.Parent = titleLabel
 
-local btn = Instance.new("TextButton")
-btn.Size = UDim2.new(1, -20, 0, 40)
-btn.Position = UDim2.new(0, 10, 0, 85)
-btn.BackgroundColor3 = Color3.fromRGB(0, 170, 120)
-btn.Text = "⚡ انتقال غصب (فحص شامل)"
-btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-btn.TextSize = 13
-btn.Font = Enum.Font.GothamBold
-btn.Parent = mainFrame
+-- زر إغلاق الواجهة (X)
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 35, 0, 35)
+closeBtn.Position = UDim2.new(1, -40, 0, 2)
+closeBtn.BackgroundTransparency = 1
+closeBtn.Text = "X"
+closeBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
+closeBtn.TextSize = 16
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.Parent = titleLabel
 
-local btnCorner = Instance.new("UICorner")
-btnCorner.CornerRadius = UDim.new(0, 8)
-btnCorner.Parent = btn
+closeBtn.MouseButton1Click:Connect(function()
+	mainFrame.Visible = false
+end)
 
--- دالة انتقال فحص شامل لجميع مجلدات الماب
-btn.MouseButton1Click:Connect(function()
-	local char = player.Character
-	if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-	
-	local found = false
-	status.Text = "🔍 جاري المسح الشامل..."
-	
-	-- نبحث عن أي كائن في الـ Workspace يملك Humanoid أو Pivot أو جزء مجسم
-	for _, item in pairs(workspace:GetChildren()) do
-		if item ~= char and item.Name ~= "Terrain" and item.Name ~= "Camera" then
-			-- فحص المجلدات والمجسمات
-			local targetPart = nil
-			
-			if item:IsA("Model") then
-				targetPart = item.PrimaryPart or item:FindFirstChildWhichIsA("BasePart")
-			elseif item:IsA("BasePart") and not item.Anchored then
-				targetPart = item
-			end
-			
-			-- نضمن أنه ليس لاعباً آخر
-			if targetPart and not game.Players:GetPlayerFromCharacter(item) then
-				local dist = (char.HumanoidRootPart.Position - targetPart.Position).Magnitude
-				if dist > 8 and dist < 2000 then
-					char.HumanoidRootPart.CFrame = targetPart.CFrame + Vector3.new(0, 4, 0)
-					status.Text = "✅ تم الانتقال إلى: " .. item.Name
-					found = true
-					break
+-- صندوق القائمة (ScrollingFrame) لعرض الضبان القريبة
+local scrollingFrame = Instance.new("ScrollingFrame")
+scrollingFrame.Size = UDim2.new(1, -20, 1, -90)
+scrollingFrame.Position = UDim2.new(0, 10, 0, 50)
+scrollingFrame.BackgroundTransparency = 1
+scrollingFrame.BorderSizePixel = 0
+scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+scrollingFrame.ScrollBarThickness = 6
+scrollingFrame.Parent = mainFrame
+
+local uiListLayout = Instance.new("UIListLayout")
+uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+uiListLayout.Padding = UDim.new(0, 6)
+uiListLayout.Parent = scrollingFrame
+
+-- تذييل الواجهة (الحقوق)
+local footerLabel = Instance.new("TextLabel")
+footerLabel.Size = UDim2.new(1, 0, 0, 25)
+footerLabel.Position = UDim2.new(0, 0, 1, -25)
+footerLabel.BackgroundTransparency = 1
+footerLabel.TextColor3 = Color3.fromRGB(120, 120, 140)
+footerLabel.TextSize = 11
+footerLabel.Font = Enum.Font.Gotham
+footerLabel.Text = "اضغط زر (ESC) لإخفاء/إظهار القائمة | By r4w7"
+footerLabel.Parent = mainFrame
+
+-- دالة لفتح وإغلاق القائمة عبر زر ESC
+userInputService.InputBegan:Connect(function(input, gameProcessed)
+	if input.KeyCode == Enum.KeyCode.Escape then
+		-- منع اللعبة من إيقاف القائمة الافتراضية بشكل كامل أو السماح بفتحها
+		mainFrame.Visible = not mainFrame.Visible
+	end
+end)
+
+-- حلقة لتحديث رادار الضبان والمسافات والأنواع باستمرار
+task.spawn(function()
+	while task.wait(0.5) do
+		if mainFrame.Visible then
+			local character = player.Character
+			if character and character:FindFirstChild("HumanoidRootPart") then
+				-- مسح القائمة القديمة
+				for _, child in pairs(scrollingFrame:GetChildren()) do
+					if child:IsA("Frame") then
+						child:Destroy()
+					end
 				end
+				
+				local count = 0
+				-- البحث عن جميع الكائنات المحتملة في الـ Workspace
+				for _, obj in pairs(workspace:GetDescendants()) do
+					if obj ~= character and not obj:IsDescendantOf(character) then
+						local isLive = obj:IsA("Model") and (obj:FindFirstChildOfClass("Humanoid") or obj.Name:find("ضب") or obj.Name:find("Dhab") or obj.Name:find("Lizard"))
+						
+						if isLive then
+							local part = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
+							if part then
+								local dist = math.floor((character.HumanoidRootPart.Position - part.Position).Magnitude)
+								
+								if dist < 1500 then -- نطاق البحث 1500 متر
+									count = count + 1
+									
+									-- تصميم خانة لكل ضب يتم رصده
+									local itemFrame = Instance.new("Frame")
+									itemFrame.Size = UDim2.new(1, -5, 0, 45)
+									itemFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+									itemFrame.Parent = scrollingFrame
+									
+									local itemCorner = Instance.new("UICorner")
+									itemCorner.CornerRadius = UDim.new(0, 8)
+									itemCorner.Parent = itemFrame
+									
+									-- اسم ونوع الضب
+									local nameLabel = Instance.new("TextLabel")
+									nameLabel.Size = UDim2.new(0.6, 0, 1, 0)
+									nameLabel.Position = UDim2.new(0, 10, 0, 0)
+									nameLabel.BackgroundTransparency = 1
+									nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+									nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+									nameLabel.TextSize = 13
+									nameLabel.Font = Enum.Font.GothamBold
+									nameLabel.Text = "🦎 " .. obj.Name
+									nameLabel.Parent = itemFrame
+									
+									-- المسافة عنه
+									local distLabel = Instance.new("TextLabel")
+									distLabel.Size = UDim2.new(0.4, -10, 1, 0)
+									distLabel.Position = UDim2.new(0.6, 0, 0, 0)
+									distLabel.BackgroundTransparency = 1
+									distLabel.TextXAlignment = Enum.TextXAlignment.Right
+									distLabel.TextColor3 = Color3.fromRGB(0, 255, 200)
+									distLabel.TextSize = 13
+									distLabel.Font = Enum.Font.GothamMedium
+									distLabel.Text = dist .. " متر"
+									distLabel.Parent = itemFrame
+								end
+							end
+						end
+					end
+				end
+				
+				-- تحديث حجم القائمة بناءً على عدد النتائج
+				scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, count * 51)
 			end
 		end
-	end
-	
-	if not found then
-		status.Text = "⚠️ اخرج للصخراء واضغط الزر مجدداً"
 	end
 end)
