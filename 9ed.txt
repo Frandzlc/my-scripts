@@ -4,7 +4,7 @@ local runService = game:GetService("RunService")
 
 -- إنشاء الواجهة الرئيسية
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "R4W7_LogoOnlyStrict"
+screenGui.Name = "R4W7_DhabFixScan"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
@@ -38,7 +38,7 @@ uiCorner.Parent = mainFrame
 local titleLabel = Instance.new("TextLabel")
 titleLabel.Size = UDim2.new(1, 0, 0, 40)
 titleLabel.BackgroundColor3 = Color3.fromRGB(28, 28, 40)
-titleLabel.Text = "🦎 لوحة صيد الضبان | r4w7"
+titleLabel.Text = "🦎 رادار صيد الضبان المطور | r4w7"
 titleLabel.TextColor3 = Color3.fromRGB(0, 255, 204)
 titleLabel.TextSize = 14
 titleLabel.Font = Enum.Font.GothamBold
@@ -91,7 +91,7 @@ closeBtn.MouseButton1Click:Connect(function()
 	mainFrame.Visible = false
 end)
 
--- فتح وإغلاق القائمة عبر الضغط على اللوقو فقط (بدون أي تفاعل مع زر ESC)
+-- فتح وإغلاق القائمة عبر الضغط على اللوقو فقط
 logoBtn.MouseButton1Click:Connect(function()
 	mainFrame.Visible = not mainFrame.Visible
 end)
@@ -143,4 +143,115 @@ uiListLayout.Padding = UDim.new(0, 6)
 uiListLayout.Parent = scrollingFrame
 
 -- تذييل الواجهة
-local footerLabel = Instance
+local footerLabel = Instance.new("TextLabel")
+footerLabel.Size = UDim2.new(1, 0, 0, 25)
+footerLabel.Position = UDim2.new(0, 0, 1, -25)
+footerLabel.BackgroundTransparency = 1
+footerLabel.TextColor3 = Color3.fromRGB(120, 120, 140)
+footerLabel.TextSize = 11
+footerLabel.Font = Enum.Font.Gotham
+footerLabel.Text = "اضغط اللوقو بالماوس للفتح/الإغلاق | By r4w7"
+footerLabel.Parent = mainFrame
+
+-- جدول الـ ESP
+local espItems = {}
+local function clearESP()
+	for _, esp in pairs(espItems) do
+		if esp then esp:Remove() end
+	end
+	espItems = {}
+end
+
+-- دالة الندرة
+local function getRarity(name)
+	local hash = 0
+	for i = 1, #name do
+		hash = hash + string.byte(name, i)
+	end
+	
+	local rarityType = hash % 100
+	if rarityType < 60 then
+		return "عادي ⚪", Color3.fromRGB(200, 200, 200)
+	elseif rarityType < 85 then
+		return "نادر 🔵", Color3.fromRGB(50, 150, 255)
+	elseif rarityType < 95 then
+		return "أسطوري 🟣", Color3.fromRGB(180, 50, 255)
+	else
+		return "خرافي 🔥", Color3.fromRGB(255, 165, 0)
+	end
+end
+
+-- دالة الانتقال الآمن
+local function safeTeleport(targetPart)
+	local character = player.Character
+	if character and character:FindFirstChild("HumanoidRootPart") then
+		local hrp = character.HumanoidRootPart
+		if character:FindFirstChildOfClass("Humanoid") then
+			character:FindFirstChildOfClass("Humanoid").PlatformStand = true
+		end
+		
+		hrp.CFrame = targetPart.CFrame + Vector3.new(0, 3, 0)
+		hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+		
+		task.wait(0.05)
+		if character:FindFirstChildOfClass("Humanoid") then
+			character:FindFirstChildOfClass("Humanoid").PlatformStand = false
+		end
+	end
+end
+
+-- التحديث المستمر للبحث الشامل عن الضبان والكائنات
+runService.RenderStepped:Connect(function()
+	local character = player.Character
+	if not character or not character:FindFirstChild("HumanoidRootPart") then
+		clearESP()
+		return
+	end
+	
+	clearESP()
+	
+	local activeCount = 0
+	if mainFrame.Visible then
+		for _, child in pairs(scrollingFrame:GetChildren()) do
+			if child:IsA("Frame") then child:Destroy() end
+		end
+	end
+	
+	-- بحث شامل في الـ Workspace عن أي نموذج يحتوي على ضب أو شبيه له
+	for _, obj in pairs(workspace:GetDescendants()) do
+		if obj ~= character and not obj:IsDescendantOf(character) then
+			if obj:IsA("Model") then
+				local nameLower = string.lower(obj.Name)
+				-- شروط شاملة للبحث عن أي ضب بغض النظر عن طريقة تسميته في الماب
+				local isTarget = nameLower:find("dhab") or nameLower:find("ضب") or nameLower:find("lizard") or nameLower:find("reptile") or obj:FindFirstChildOfClass("Humanoid")
+				
+				if isTarget then
+					-- استثناء اللاعبين الآخرين لكي لا يظهروا في قائمة الضبان
+					local isPlayer = game.Players:GetPlayerFromCharacter(obj)
+					if not isPlayer then
+						local part = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
+						if part then
+							local dist = math.floor((character.HumanoidRootPart.Position - part.Position).Magnitude)
+							
+							if dist < 5000 then -- زيادة نطاق البحث لمسافة 5000 متر لضمان كشف كل الضبان البعيدة
+								activeCount = activeCount + 1
+								local rarityText, rarityColor = getRarity(obj.Name)
+								
+								-- رسم الـ ESP
+								if espActive then
+									local vector, onScreen = workspace.CurrentCamera:WorldToViewportPoint(part.Position)
+									if onScreen then
+										local espText = Drawing.new("Text")
+										espText.Text = "🦎 " .. obj.Name .. " | " .. rarityText .. " [" .. dist .. "م]"
+										espText.Size = 13
+										espText.Center = true
+										espText.Outline = true
+										espText.Color = rarityColor
+										espText.Position = Vector2.new(vector.X, vector.Y - 20)
+										espText.Visible = true
+										table.insert(espItems, espText)
+									end
+								end
+								
+								-- إضافة الضب للقائمة مع الانتقال الآمن
+								if mainFrame.Visible then
