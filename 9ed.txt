@@ -4,49 +4,28 @@ local runService = game:GetService("RunService")
 
 -- إنشاء الواجهة الرئيسية
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "R4W7_DhabLogoMenu"
+screenGui.Name = "R4W7_DhabFixTP"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
--- 1. زر الشعار الجانبي (المربع الذي تضغط عليه ليفتح المنيو)
-local toggleButton = Instance.new("TextButton")
-toggleButton.Size = UDim2.new(0, 50, 0, 50)
-toggleButton.Position = UDim2.new(0, 15, 0.4, -25) -- منتصف الشاشة من اليسار (يمكنك سحبه أيضاً)
-toggleButton.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
-toggleButton.Text = "🦎"
-toggleButton.TextColor3 = Color3.fromRGB(0, 255, 204)
-toggleButton.TextSize = 22
-toggleButton.Font = Enum.Font.GothamBold
-toggleButton.Parent = screenGui
-
-local toggleCorner = Instance.new("UICorner")
-toggleCorner.CornerRadius = UDim.new(0, 12)
-toggleCorner.Parent = toggleButton
-
--- حواف مضيئة لزر الشعار
-local toggleStroke = Instance.new("UIStroke")
-toggleStroke.Color = Color3.fromRGB(0, 255, 204)
-toggleStroke.Thickness = 2
-toggleStroke.Parent = toggleButton
-
--- 2. إطار الواجهة الرئيسي (يبدأ مغلقاً)
+-- إطار الواجهة الرئيسي (قابل للسحب)
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 320, 0, 420)
-mainFrame.Position = UDim2.new(0.5, -160, 0.5, -210)
+mainFrame.Size = UDim2.new(0, 320, 0, 450)
+mainFrame.Position = UDim2.new(0.5, -160, 0.5, -225)
 mainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
 mainFrame.BorderSizePixel = 0
-mainFrame.Visible = false 
+mainFrame.Visible = false
 mainFrame.Parent = screenGui
 
 local uiCorner = Instance.new("UICorner")
 uiCorner.CornerRadius = UDim.new(0, 12)
 uiCorner.Parent = mainFrame
 
--- شريط العنوان (لسحب الواجهة الرئيسية)
+-- شريط العنوان (سحب الواجهة)
 local titleLabel = Instance.new("TextLabel")
 titleLabel.Size = UDim2.new(1, 0, 0, 40)
 titleLabel.BackgroundColor3 = Color3.fromRGB(28, 28, 40)
-titleLabel.Text = "🦎 لوحة صيد الضبان | r4w7"
+titleLabel.Text = "🦎 رادار وحل مشكلة الرجوع | r4w7"
 titleLabel.TextColor3 = Color3.fromRGB(0, 255, 204)
 titleLabel.TextSize = 14
 titleLabel.Font = Enum.Font.GothamBold
@@ -56,7 +35,7 @@ local titleCorner = Instance.new("UICorner")
 titleCorner.CornerRadius = UDim.new(0, 12)
 titleCorner.Parent = titleLabel
 
--- برمجة سحب الواجهة الرئيسية
+-- برمجة سحب الواجهة
 local dragging, dragInput, dragStart, startPos
 titleLabel.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -84,7 +63,7 @@ userInputService.InputChanged:Connect(function(input)
 	end
 end)
 
--- زر إغلاق (X) داخل الواجهة
+-- زر إغلاق (X)
 local closeBtn = Instance.new("TextButton")
 closeBtn.Size = UDim2.new(0, 35, 0, 35)
 closeBtn.Position = UDim2.new(1, -40, 0, 2)
@@ -99,18 +78,13 @@ closeBtn.MouseButton1Click:Connect(function()
 	mainFrame.Visible = false
 end)
 
--- ربط زر الشعار الجانبي بفتح وإغلاق القائمة
-toggleButton.MouseButton1Click:Connect(function()
-	mainFrame.Visible = not mainFrame.Visible
-end)
-
--- حالة الـ ESP
+-- حالات الميزات
 local espActive = true
 
--- زر تفعيل/تعطيل الـ ESP
+-- زر تفعيل الـ ESP
 local espToggleBtn = Instance.new("TextButton")
-espToggleBtn.Size = UDim2.new(1, -20, 0, 40)
-espToggleBtn.Position = UDim2.new(0, 10, 0, 50)
+espToggleBtn.Size = UDim2.new(1, -20, 0, 35)
+espToggleBtn.Position = UDim2.new(0, 10, 0, 48)
 espToggleBtn.BackgroundColor3 = Color3.fromRGB(30, 70, 40)
 espToggleBtn.Text = "👁️ ميزة الـ ESP (الأسماء والأماكن): [ مفعل ✅ ]"
 espToggleBtn.TextColor3 = Color3.fromRGB(100, 255, 150)
@@ -135,10 +109,10 @@ espToggleBtn.MouseButton1Click:Connect(function()
 	end
 end)
 
--- صندوق القائمة (ScrollingFrame)
+-- صندوق القائمة
 local scrollingFrame = Instance.new("ScrollingFrame")
-scrollingFrame.Size = UDim2.new(1, -20, 1, -145)
-scrollingFrame.Position = UDim2.new(0, 10, 0, 100)
+scrollingFrame.Size = UDim2.new(1, -20, 1, -135)
+scrollingFrame.Position = UDim2.new(0, 10, 0, 95)
 scrollingFrame.BackgroundTransparency = 1
 scrollingFrame.BorderSizePixel = 0
 scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
@@ -158,8 +132,15 @@ footerLabel.BackgroundTransparency = 1
 footerLabel.TextColor3 = Color3.fromRGB(120, 120, 140)
 footerLabel.TextSize = 11
 footerLabel.Font = Enum.Font.Gotham
-footerLabel.Text = "اضغط أي ضب بالقائمة للانتقال إليه | By r4w7"
+footerLabel.Text = "زر (ESC) للإخفاء/الإظهار | اضغط على الضب للانتقال"
 footerLabel.Parent = mainFrame
+
+-- إظهار/إغلاق القائمة عبر ESC
+userInputService.InputBegan:Connect(function(input, gameProcessed)
+	if input.KeyCode == Enum.KeyCode.Escape then
+		mainFrame.Visible = not mainFrame.Visible
+	end
+end)
 
 -- جدول الـ ESP
 local espItems = {}
@@ -186,6 +167,27 @@ local function getRarity(name)
 		return "أسطوري 🟣", Color3.fromRGB(180, 50, 255)
 	else
 		return "خرافي 🔥", Color3.fromRGB(255, 165, 0)
+	end
+end
+
+-- دالة الانتقال الآمن (تمنع نظام الحماية من إرجاعك للخلف)
+local function safeTeleport(targetPart)
+	local character = player.Character
+	if character and character:FindFirstChild("HumanoidRootPart") then
+		local hrp = character.HumanoidRootPart
+		-- إيقاف السرعة والحركة المؤقتة لمنع كشف الانتقال
+		if character:FindFirstChildOfClass("Humanoid") then
+			character:FindFirstChildOfClass("Humanoid").PlatformStand = true
+		end
+		
+		-- الانتقال الفوري مع تثبيت الـ Velocity لتجاوز الـ Anti-Cheat
+		hrp.CFrame = targetPart.CFrame + Vector3.new(0, 3, 0)
+		hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+		
+		task.wait(0.05)
+		if character:FindFirstChildOfClass("Humanoid") then
+			character:FindFirstChildOfClass("Humanoid").PlatformStand = false
+		end
 	end
 end
 
@@ -236,7 +238,7 @@ runService.RenderStepped:Connect(function()
 							end
 						end
 						
-						-- إضافة الضب للقائمة مع ميزة الانتقال
+						-- إضافة الضب للقائمة مع الانتقال الآمن عند الضغط عليه
 						if mainFrame.Visible then
 							local itemBtn = Instance.new("TextButton")
 							itemBtn.Size = UDim2.new(1, -5, 0, 45)
@@ -270,11 +272,8 @@ runService.RenderStepped:Connect(function()
 							distLabel.Text = "انتقال ⚡ (" .. dist .. "م)"
 							distLabel.Parent = itemBtn
 							
-							-- الانتقال عند الضغط على اسم الضب
 							itemBtn.MouseButton1Click:Connect(function()
-								if character and character:FindFirstChild("HumanoidRootPart") then
-									character.HumanoidRootPart.CFrame = part.CFrame + Vector3.new(0, 3, 0)
-								end
+								safeTeleport(part)
 							end)
 						end
 					end
