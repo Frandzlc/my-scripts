@@ -4,28 +4,28 @@ local runService = game:GetService("RunService")
 
 -- إنشاء الواجهة الرئيسية
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "R4W7_DhabUltimate"
+screenGui.Name = "R4W7_DhabProMenu"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
--- إطار الواجهة الرئيسي (الرادار)
+-- إطار الواجهة الرئيسي (قابل للسحب)
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 300, 0, 430)
-mainFrame.Position = UDim2.new(0.5, -150, 0.5, -215)
-mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+mainFrame.Size = UDim2.new(0, 320, 0, 420)
+mainFrame.Position = UDim2.new(0.5, -160, 0.5, -210)
+mainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
 mainFrame.BorderSizePixel = 0
-mainFrame.Visible = false -- تبدأ مغلقة
+mainFrame.Visible = false -- تبدأ مغلقة، تفتح بـ ESC
 mainFrame.Parent = screenGui
 
 local uiCorner = Instance.new("UICorner")
 uiCorner.CornerRadius = UDim.new(0, 12)
 uiCorner.Parent = mainFrame
 
--- شريط العنوان
+-- شريط العنوان (سحب الواجهة)
 local titleLabel = Instance.new("TextLabel")
 titleLabel.Size = UDim2.new(1, 0, 0, 40)
-titleLabel.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
-titleLabel.Text = "🦎 رادار و ESP والقتل الفوري | r4w7"
+titleLabel.BackgroundColor3 = Color3.fromRGB(28, 28, 40)
+titleLabel.Text = "🦎 لوحة تحكم صيد الضبان | r4w7"
 titleLabel.TextColor3 = Color3.fromRGB(0, 255, 204)
 titleLabel.TextSize = 14
 titleLabel.Font = Enum.Font.GothamBold
@@ -35,7 +35,35 @@ local titleCorner = Instance.new("UICorner")
 titleCorner.CornerRadius = UDim.new(0, 12)
 titleCorner.Parent = titleLabel
 
--- زر إغلاق الواجهة (X)
+-- برمجة سحب الواجهة
+local dragging, dragInput, dragStart, startPos
+titleLabel.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = mainFrame.Position
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+
+titleLabel.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+		dragInput = input
+	end
+end)
+
+userInputService.InputChanged:Connect(function(input)
+	if input == dragInput and dragging then
+		local delta = input.Position - dragStart
+		mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+	end
+end)
+
+-- زر إغلاق (X)
 local closeBtn = Instance.new("TextButton")
 closeBtn.Size = UDim2.new(0, 35, 0, 35)
 closeBtn.Position = UDim2.new(1, -40, 0, 2)
@@ -50,41 +78,70 @@ closeBtn.MouseButton1Click:Connect(function()
 	mainFrame.Visible = false
 end)
 
--- متغير لتفعيل أو تعطيل القتل الفوري
+-- حالة الميزات
+local espActive = true
 local instantKillActive = false
 
--- زر تفعيل القتل بطلقة واحدة (Instant Kill Toggle)
+-- زر تفعيل الـ ESP
+local espToggleBtn = Instance.new("TextButton")
+espToggleBtn.Size = UDim2.new(1, -20, 0, 35)
+espToggleBtn.Position = UDim2.new(0, 10, 0, 50)
+espToggleBtn.BackgroundColor3 = Color3.fromRGB(30, 70, 40)
+espToggleBtn.Text = "👁️ ميزة الـ ESP (الأسماء والأماكن): [ مفعل ✅ ]"
+espToggleBtn.TextColor3 = Color3.fromRGB(100, 255, 150)
+espToggleBtn.TextSize = 12
+espToggleBtn.Font = Enum.Font.GothamBold
+espToggleBtn.Parent = mainFrame
+
+local espCorner = Instance.new("UICorner")
+espCorner.CornerRadius = UDim.new(0, 8)
+espCorner.Parent = espToggleBtn
+
+espToggleBtn.MouseButton1Click:Connect(function()
+	espActive = not espActive
+	if espActive then
+		espToggleBtn.BackgroundColor3 = Color3.fromRGB(30, 70, 40)
+		espToggleBtn.Text = "👁️ ميزة الـ ESP (الأسماء والأماكن): [ مفعل ✅ ]"
+		espToggleBtn.TextColor3 = Color3.fromRGB(100, 255, 150)
+	else
+		espToggleBtn.BackgroundColor3 = Color3.fromRGB(60, 30, 30)
+		espToggleBtn.Text = "👁️ ميزة الـ ESP (الأسماء والأماكن): [ معطل ❌ ]"
+		espToggleBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
+	end
+end)
+
+-- زر القتل الفوري (المحدث)
 local killToggleBtn = Instance.new("TextButton")
 killToggleBtn.Size = UDim2.new(1, -20, 0, 35)
-killToggleBtn.Position = UDim2.new(0, 10, 0, 48)
+killToggleBtn.Position = UDim2.new(0, 10, 0, 95)
 killToggleBtn.BackgroundColor3 = Color3.fromRGB(60, 30, 30)
-killToggleBtn.Text = "⚡ قتل بطلقة واحدة: [ معطل ❌ ]"
+killToggleBtn.Text = "⚡ قتل الضب فوراً (حذف/القضاء عليه): [ معطل ❌ ]"
 killToggleBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
-killToggleBtn.TextSize = 13
+killToggleBtn.TextSize = 12
 killToggleBtn.Font = Enum.Font.GothamBold
 killToggleBtn.Parent = mainFrame
 
-local toggleCorner = Instance.new("UICorner")
-toggleCorner.CornerRadius = UDim.new(0, 8)
-toggleCorner.Parent = killToggleBtn
+local killCorner = Instance.new("UICorner")
+killCorner.CornerRadius = UDim.new(0, 8)
+killCorner.Parent = killToggleBtn
 
 killToggleBtn.MouseButton1Click:Connect(function()
 	instantKillActive = not instantKillActive
 	if instantKillActive then
 		killToggleBtn.BackgroundColor3 = Color3.fromRGB(30, 70, 40)
-		killToggleBtn.Text = "⚡ قتل بطلقة واحدة: [ مفعل ✅ ]"
+		killToggleBtn.Text = "⚡ قتل الضب فوراً (حذف/القضاء عليه): [ مفعل ✅ ]"
 		killToggleBtn.TextColor3 = Color3.fromRGB(100, 255, 150)
 	else
 		killToggleBtn.BackgroundColor3 = Color3.fromRGB(60, 30, 30)
-		killToggleBtn.Text = "⚡ قتل بطلقة واحدة: [ معطل ❌ ]"
+		killToggleBtn.Text = "⚡ قتل الضب فوراً (حذف/القضاء عليه): [ معطل ❌ ]"
 		killToggleBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
 	end
 end)
 
--- صندوق القائمة (ScrollingFrame)
+-- صندوق القائمة
 local scrollingFrame = Instance.new("ScrollingFrame")
-scrollingFrame.Size = UDim2.new(1, -20, 1, -135)
-scrollingFrame.Position = UDim2.new(0, 10, 0, 90)
+scrollingFrame.Size = UDim2.new(1, -20, 1, -185)
+scrollingFrame.Position = UDim2.new(0, 10, 0, 140)
 scrollingFrame.BackgroundTransparency = 1
 scrollingFrame.BorderSizePixel = 0
 scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
@@ -104,29 +161,45 @@ footerLabel.BackgroundTransparency = 1
 footerLabel.TextColor3 = Color3.fromRGB(120, 120, 140)
 footerLabel.TextSize = 11
 footerLabel.Font = Enum.Font.Gotham
-footerLabel.Text = "اضغط زر (ESC) لإخفاء/إظهار القائمة | By r4w7"
+footerLabel.Text = "زر (ESC) للإخفاء/الإظهار | اسحب من العنوان | r4w7"
 footerLabel.Parent = mainFrame
 
--- فتح وإغلاق القائمة بزر ESC
+-- إظهار/إغلاق القائمة عبر ESC
 userInputService.InputBegan:Connect(function(input, gameProcessed)
 	if input.KeyCode == Enum.KeyCode.Escape then
 		mainFrame.Visible = not mainFrame.Visible
 	end
 end)
 
--- جدول تخزين الـ ESP
+-- جدول الـ ESP
 local espItems = {}
-
 local function clearESP()
 	for _, esp in pairs(espItems) do
-		if esp then
-			esp:Remove()
-		end
+		if esp then esp:Remove() end
 	end
 	espItems = {}
 end
 
--- التحديث المستمر للـ ESP والقتل الفوري والرادار
+-- دالة الندرة
+local function getRarity(name)
+	local hash = 0
+	for i = 1, #name do
+		hash = hash + string.byte(name, i)
+	end
+	
+	local rarityType = hash % 100
+	if rarityType < 60 then
+		return "عادي ⚪", Color3.fromRGB(200, 200, 200)
+	elseif rarityType < 85 then
+		return "نادر 🔵", Color3.fromRGB(50, 150, 255)
+	elseif rarityType < 95 then
+		return "أسطوري 🟣", Color3.fromRGB(180, 50, 255)
+	else
+		return "خرافي 🔥", Color3.fromRGB(255, 165, 0)
+	end
+end
+
+-- التحديث المستمر
 runService.RenderStepped:Connect(function()
 	local character = player.Character
 	if not character or not character:FindFirstChild("HumanoidRootPart") then
@@ -139,9 +212,7 @@ runService.RenderStepped:Connect(function()
 	local activeCount = 0
 	if mainFrame.Visible then
 		for _, child in pairs(scrollingFrame:GetChildren()) do
-			if child:IsA("Frame") then
-				child:Destroy()
-			end
+			if child:IsA("Frame") then child:Destroy() end
 		end
 	end
 	
@@ -155,68 +226,36 @@ runService.RenderStepped:Connect(function()
 				if part then
 					local dist = math.floor((character.HumanoidRootPart.Position - part.Position).Magnitude)
 					
-					if dist < 2000 then
-						-- تنفيذ القتل الفوري إذا كان الزر مفعل ولديه Humanoid
-						if instantKillActive and humanoid and humanoid.Health > 0 then
-							humanoid.Health = 0
+					if dist < 2500 then
+						-- القتل الفوري المحدث (تصفير الدم وتدمير المجسم إذا لزم الأمر لضمان الموت)
+						if instantKillActive then
+							if humanoid then
+								humanoid.Health = 0
+								pcall(function()
+									humanoid:TakeDamage(999999)
+								end)
+							else
+								-- إذا لم يكن يملك Humanoid، نقوم بإزالة المجسم لتسجيل الصيد
+								pcall(function()
+									obj:Destroy()
+								end)
+							end
 						end
 						
 						activeCount = activeCount + 1
+						local rarityText, rarityColor = getRarity(obj.Name)
 						
 						-- رسم الـ ESP
-						local vector, onScreen = workspace.CurrentCamera:WorldToViewportPoint(part.Position)
-						if onScreen then
-							local espText = Drawing.new("Text")
-							espText.Text = "🦎 " .. obj.Name .. " [" .. dist .. "م]"
-							espText.Size = 14
-							espText.Center = true
-							espText.Outline = true
-							espText.Color = instantKillActive and Color3.fromRGB(255, 50, 50) or Color3.fromRGB(0, 255, 150)
-							espText.Position = Vector2.new(vector.X, vector.Y - 20)
-							espText.Visible = true
-							table.insert(espItems, espText)
-						end
-						
-						-- إضافة القائمة
-						if mainFrame.Visible then
-							local itemFrame = Instance.new("Frame")
-							itemFrame.Size = UDim2.new(1, -5, 0, 45)
-							itemFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
-							itemFrame.Parent = scrollingFrame
-							
-							local itemCorner = Instance.new("UICorner")
-							itemCorner.CornerRadius = UDim.new(0, 8)
-							itemCorner.Parent = itemFrame
-							
-							local nameLabel = Instance.new("TextLabel")
-							nameLabel.Size = UDim2.new(0.6, 0, 1, 0)
-							nameLabel.Position = UDim2.new(0, 10, 0, 0)
-							nameLabel.BackgroundTransparency = 1
-							nameLabel.TextXAlignment = Enum.TextXAlignment.Left
-							nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-							nameLabel.TextSize = 13
-							nameLabel.Font = Enum.Font.GothamBold
-							nameLabel.Text = "🦎 " .. obj.Name
-							nameLabel.Parent = itemFrame
-							
-							local distLabel = Instance.new("TextLabel")
-							distLabel.Size = UDim2.new(0.4, -10, 1, 0)
-							distLabel.Position = UDim2.new(0.6, 0, 0, 0)
-							distLabel.BackgroundTransparency = 1
-							distLabel.TextXAlignment = Enum.TextXAlignment.Right
-							distLabel.TextColor3 = Color3.fromRGB(0, 255, 200)
-							distLabel.TextSize = 13
-							distLabel.Font = Enum.Font.GothamMedium
-							distLabel.Text = dist .. " متر"
-							distLabel.Parent = itemFrame
-						end
-					end
-				end
-			end
-		end
-	end
-	
-	if mainFrame.Visible then
-		scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, activeCount * 51)
-	end
-end)
+						if espActive then
+							local vector, onScreen = workspace.CurrentCamera:WorldToViewportPoint(part.Position)
+							if onScreen then
+								local espText = Drawing.new("Text")
+								espText.Text = "🦎 " .. obj.Name .. " | " .. rarityText .. " [" .. dist .. "م]"
+								espText.Size = 13
+								espText.Center = true
+								espText.Outline = true
+								espText.Color = rarityColor
+								espText.Position = Vector2.new(vector.X, vector.Y - 20)
+								espText.Visible = true
+								table.insert(espItems, espText)
+							end
