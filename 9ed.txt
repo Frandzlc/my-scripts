@@ -4,11 +4,11 @@ local runService = game:GetService("RunService")
 
 -- إنشاء الواجهة الرئيسية
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "R4W7_DhabWithLogo"
+screenGui.Name = "R4W7_LogoOnlyStrict"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
--- زر الشعار (اللوقو) الدائم على الشاشة
+-- زر الشعار (اللوقو) الدائم على الشاشة للفتح والإغلاق بالماوس فقط
 local logoBtn = Instance.new("TextButton")
 logoBtn.Size = UDim2.new(0, 50, 0, 50)
 logoBtn.Position = UDim2.new(0, 20, 0, 100)
@@ -38,7 +38,7 @@ uiCorner.Parent = mainFrame
 local titleLabel = Instance.new("TextLabel")
 titleLabel.Size = UDim2.new(1, 0, 0, 40)
 titleLabel.BackgroundColor3 = Color3.fromRGB(28, 28, 40)
-titleLabel.Text = "🦎 رادار ولقو صيد الضبان | r4w7"
+titleLabel.Text = "🦎 لوحة صيد الضبان | r4w7"
 titleLabel.TextColor3 = Color3.fromRGB(0, 255, 204)
 titleLabel.TextSize = 14
 titleLabel.Font = Enum.Font.GothamBold
@@ -91,17 +91,9 @@ closeBtn.MouseButton1Click:Connect(function()
 	mainFrame.Visible = false
 end)
 
--- فتح وإغلاق القائمة عبر اللوقو أو زر ESC
-local function toggleMenu()
+-- فتح وإغلاق القائمة عبر الضغط على اللوقو فقط (بدون أي تفاعل مع زر ESC)
+logoBtn.MouseButton1Click:Connect(function()
 	mainFrame.Visible = not mainFrame.Visible
-end
-
-logoBtn.MouseButton1Click:Connect(toggleMenu)
-
-userInputService.InputBegan:Connect(function(input, gameProcessed)
-	if input.KeyCode == Enum.KeyCode.Escape then
-		toggleMenu()
-	end
 end)
 
 -- حالات الميزات
@@ -151,35 +143,4 @@ uiListLayout.Padding = UDim.new(0, 6)
 uiListLayout.Parent = scrollingFrame
 
 -- تذييل الواجهة
-local footerLabel = Instance.new("TextLabel")
-footerLabel.Size = UDim2.new(1, 0, 0, 25)
-footerLabel.Position = UDim2.new(0, 0, 1, -25)
-footerLabel.BackgroundTransparency = 1
-footerLabel.TextColor3 = Color3.fromRGB(120, 120, 140)
-footerLabel.TextSize = 11
-footerLabel.Font = Enum.Font.Gotham
-footerLabel.Text = "اضغط اللوقو أو (ESC) للإخفاء | اضغط للانتظام"
-footerLabel.Parent = mainFrame
-
--- جدول الـ ESP
-local espItems = {}
-local function clearESP()
-	for _, esp in pairs(espItems) do
-		if esp then esp:Remove() end
-	end
-	espItems = {}
-end
-
--- دالة الندرة
-local function getRarity(name)
-	local hash = 0
-	for i = 1, #name do
-		hash = hash + string.byte(name, i)
-	end
-	
-	local rarityType = hash % 100
-	if rarityType < 60 then
-		return "عادي ⚪", Color3.fromRGB(200, 200, 200)
-	elseif rarityType < 85 then
-		return "نادر 🔵", Color3.fromRGB(50, 150, 255)
-	elseif rarity
+local footerLabel = Instance
